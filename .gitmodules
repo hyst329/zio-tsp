@@ -1,0 +1,6 @@
+[submodule "zio-kafka"]
+	path = zio-kafka
+	url = git@github.com:Clover-Group/zio-kafka.git
+[submodule "zio-parquet"]
+	path = zio-parquet
+	url = git@github.com:Clover-Group/zio-parquet.git
