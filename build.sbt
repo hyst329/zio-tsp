@@ -1,27 +1,13 @@
-val ZioVersion = "1.0.0-RC9"
+val ZioVersion      = "1.0.0-RC9"
+val EmbKafkaVersion = "2.2.0"
 
 resolvers += Resolver.sonatypeRepo("releases")
 resolvers += Resolver.sonatypeRepo("snapshots")
 
-//organization := "dev.zio"
-//homepage := Some(url("https://github.com/zio/zio-kafka"))
-//name := "zio-kafka"
-//licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
-//scalaVersion := "2.12.8"
-//maxErrors := 3
-//parallelExecution in Test := false
-//scalafmtOnCompile := true
-//fork in Test := true
-//pgpPublicRing := file("/tmp/public.asc")
-//pgpSecretRing := file("/tmp/secret.asc")
-//releaseEarlyWith := SonatypePublisher
-//scmInfo := Some(
-//  ScmInfo(url("https://github.com/zio/zio-kafka/"), "scm:git:git@github.com:zio/zio-kafka.git")
-//)
-
 lazy val libs =
   libraryDependencies ++= Seq(
     "dev.zio" %% "zio" % ZioVersion
+    //"io.github.embeddedkafka" %% "embedded-kafka" % EmbKafkaVersion % test
   )
 
 lazy val commonSettings = Seq(
