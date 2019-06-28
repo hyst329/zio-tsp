@@ -1,7 +1,7 @@
 package hello
 
 import zio.App
-import zio.console.{putStrLn, getStrLn}
+import zio.console.{ getStrLn, putStrLn }
 
 object Main extends App {
 

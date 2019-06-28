@@ -1,19 +1,47 @@
-val ZioVersion = "1.0.0-RC8-12"
+val ZioVersion = "1.0.0-RC9"
 
 resolvers += Resolver.sonatypeRepo("releases")
 resolvers += Resolver.sonatypeRepo("snapshots")
 
-lazy val root = (project in file("."))
-  .settings(
-    organization := "CloverGroup",
-    name := "zio-tsp",
-    version := "0.0.1",
-    scalaVersion := "2.12.8",
-    maxErrors := 3,
-    libraryDependencies ++= Seq(
-      "dev.zio" %% "zio" % ZioVersion,
-    )
+//organization := "dev.zio"
+//homepage := Some(url("https://github.com/zio/zio-kafka"))
+//name := "zio-kafka"
+//licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
+//scalaVersion := "2.12.8"
+//maxErrors := 3
+//parallelExecution in Test := false
+//scalafmtOnCompile := true
+//fork in Test := true
+//pgpPublicRing := file("/tmp/public.asc")
+//pgpSecretRing := file("/tmp/secret.asc")
+//releaseEarlyWith := SonatypePublisher
+//scmInfo := Some(
+//  ScmInfo(url("https://github.com/zio/zio-kafka/"), "scm:git:git@github.com:zio/zio-kafka.git")
+//)
+
+lazy val libs =
+  libraryDependencies ++= Seq(
+    "dev.zio" %% "zio" % ZioVersion
   )
+
+lazy val commonSettings = Seq(
+  organization := "CloverGroup",
+  name := "zio-tsp",
+  version := "0.0.1",
+  scalaVersion := "2.12.8",
+  maxErrors := 3,
+  libs
+)
+
+lazy val kafka = (project in file("zio-kafka"))
+  .settings(
+    commonSettings,
+    libs
+  )
+
+lazy val root = (project in file("."))
+  .settings(commonSettings)
+  .dependsOn(kafka)
 
 scalacOptions := Seq(
   "-Xsource:2.13",
