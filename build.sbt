@@ -1,5 +1,6 @@
 val ZioVersion      = "1.0.0-RC9"
-val EmbKafkaVersion = "2.2.0"
+val EmbKafkaVersion = "2.3.0"
+val Specs2Version   = "4.6.0"
 
 resolvers += Resolver.sonatypeRepo("releases")
 resolvers += Resolver.sonatypeRepo("snapshots")
@@ -7,7 +8,8 @@ resolvers += Resolver.sonatypeRepo("snapshots")
 lazy val libs =
   libraryDependencies ++= Seq(
     "dev.zio"                 %% "zio"            % ZioVersion,
-    "io.github.embeddedkafka" %% "embedded-kafka" % EmbKafkaVersion
+    "io.github.embeddedkafka" %% "embedded-kafka" % EmbKafkaVersion,
+    "org.specs2"              %% "specs2-core"    % Specs2Version % "test"
   )
 
 lazy val commonSettings = Seq(
