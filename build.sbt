@@ -6,8 +6,8 @@ resolvers += Resolver.sonatypeRepo("snapshots")
 
 lazy val libs =
   libraryDependencies ++= Seq(
-    "dev.zio" %% "zio" % ZioVersion
-    //"io.github.embeddedkafka" %% "embedded-kafka" % EmbKafkaVersion % test
+    "dev.zio"                 %% "zio"            % ZioVersion,
+    "io.github.embeddedkafka" %% "embedded-kafka" % EmbKafkaVersion
   )
 
 lazy val commonSettings = Seq(

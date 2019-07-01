@@ -11,7 +11,7 @@ object Main extends App {
 
   val res0 = KafkaConsumer.subscribe(server, clientID, groupID, topic)
   val res1 = res0 *> KafkaConsumer.unsubscribe(server, clientID, groupID)
-  val data = KafkaConsumer.poll(server, clientID, groupID)
+  val data = KafkaConsumer.poll(server, clientID, groupID, topic)
 
   /* val data =
    run(groupID, clientID) { consumer =>
