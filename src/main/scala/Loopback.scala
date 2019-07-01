@@ -1,25 +1,24 @@
 package loop
 
+import zio.{ App, IO }
 import kafkaconsumer._
 
 object Main extends App {
 
-  val server   = "0.0.0.0"
-  val clientID = "client0"
-  val groupID  = "group0"
-  val topic    = "topic0"
+  def run(args: List[String]) =
+    prog.fold(_ => 1, _ => 0)
 
-  val res0 = KafkaConsumer.subscribe(server, clientID, groupID, topic)
-  val res1 = res0 *> KafkaConsumer.unsubscribe(server, clientID, groupID)
-  val data = KafkaConsumer.poll(server, clientID, groupID, topic)
+  // Effectful program
+  val prog = IO {
 
-  /* val data =
-   run(groupID, clientID) { consumer =>
-    for {
-      _       <- consumer.subscribe(Subscription.Topics(Set("topic1"))).either
-      outcome <- consumer.unsubscribe.either
-      _       <- ZIO.effect(outcome.isRight shouldBe true)
-    } yield ()
-  } */
+    val cfg = ConnectionSetup(
+      server = "localhost:9092",
+      client = "client0",
+      group = "group0",
+      topic = "testTopic"
+    )
 
+    val res = KafkaConsumer.readBatch(cfg).map(println)
+
+  }
 }
