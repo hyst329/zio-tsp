@@ -14,7 +14,7 @@ object Main extends App {
 
     putStrLn("Loopback")
 
-    /* val cfg = ConnectionSetup(
+    /* val cfg = ConnectionConfig(
       server = "localhost:9092",
       client = "client0",
       group = "group0",
