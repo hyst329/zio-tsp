@@ -21,15 +21,21 @@ lazy val commonSettings = Seq(
   libs
 )
 
+//lazy val kafka = RootProject(file("zio-kafka"))
 lazy val kafka = (project in file("zio-kafka"))
   .settings(
     commonSettings,
-    libs
   )
 
-lazy val root = (project in file("."))
+lazy val parquet = (project in file("zio-parquet"))
+  .settings(
+    commonSettings,
+  )
+
+lazy val top = (project in file("."))
+  .dependsOn(kafka, parquet)
   .settings(commonSettings)
-  .dependsOn(kafka)
+  //.aggregate(kafka, parquet)
 
 scalacOptions := Seq(
   "-Xsource:2.13",
