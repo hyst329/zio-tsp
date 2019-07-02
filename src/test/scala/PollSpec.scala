@@ -48,6 +48,5 @@ class PollSpec extends Specification with KafkaConfig {
     val res = KafkaConsumer.readBatch(cfg)
     res.isEmpty must_== false
   }
-  
 
 }
