@@ -1,10 +1,10 @@
-package parquettest
+package partest
 
 //import zio.{ DefaultRuntime, UIO }
 import org.specs2._
-import ParReader
+//import ParReader
 
-class ParquetSpec extends Specification {
+class SimpleSpec extends Specification {
 
   //val rt = new DefaultRuntime {}
 

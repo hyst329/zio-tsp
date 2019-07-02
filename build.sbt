@@ -5,36 +5,49 @@ val Specs2Version   = "4.6.0"
 resolvers += Resolver.sonatypeRepo("releases")
 resolvers += Resolver.sonatypeRepo("snapshots")
 
-lazy val libs =
+//lazy val commonLibs =
+//  libraryDependencies ++= Seq(
+//    "dev.zio"                 %% "zio"            % ZioVersion,
+//    "io.github.embeddedkafka" %% "embedded-kafka" % EmbKafkaVersion,
+//    "org.specs2"              %% "specs2-core"    % Specs2Version % "test"
+//  )
+
+lazy val commonLibs =
   libraryDependencies ++= Seq(
     "dev.zio"                 %% "zio"            % ZioVersion,
-    "io.github.embeddedkafka" %% "embedded-kafka" % EmbKafkaVersion,
-    "org.specs2"              %% "specs2-core"    % Specs2Version % "test"
+    "io.github.embeddedkafka" %% "embedded-kafka" % EmbKafkaVersion ,
+    "org.specs2"              %% "specs2-core"    % Specs2Version % "test",
   )
 
 lazy val commonSettings = Seq(
   organization := "CloverGroup",
-  name := "zio-tsp",
+  //name := "zio-tsp",
   version := "0.0.1",
   scalaVersion := "2.12.8",
   maxErrors := 3,
-  libs
+  commonLibs
 )
 
-//lazy val kafka = RootProject(file("zio-kafka"))
 lazy val kafka = (project in file("zio-kafka"))
   .settings(
-    commonSettings,
+    name := "kafka",
+    commonSettings, 
   )
 
 lazy val parquet = (project in file("zio-parquet"))
   .settings(
+    name := "parquet",
     commonSettings,
   )
 
 lazy val top = (project in file("."))
+  .settings(
+    name := "tsp",
+    commonSettings, 
+    commonLibs,
+
+  )
   .dependsOn(kafka, parquet)
-  .settings(commonSettings)
   //.aggregate(kafka, parquet)
 
 scalacOptions := Seq(

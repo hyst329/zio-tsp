@@ -1,4 +1,4 @@
-package kafkatest
+package kaftest
 
 import zio.{ DefaultRuntime, UIO }
 import org.specs2._
