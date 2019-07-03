@@ -1,7 +1,7 @@
 package kaftest
 
 import org.specs2._
-import zio.{ DefaultRuntime, UIO, ZIO, IO }
+import zio.{ Chunk, DefaultRuntime, IO, UIO, ZIO }
 //import zio.console.{ putStrLn }
 
 import net.manub.embeddedkafka.EmbeddedKafka
@@ -11,8 +11,15 @@ import zio.kafka.client.KafkaTestUtils.{ produceMany }
 class PollSpec extends Specification with DefaultRuntime {
   EmbeddedKafka.start()
 
-  def genPortRange(start: Int, end: Int) =
+  // number of messages to produce
+  val msgCount   = 2
+  val partNumber = 1
+
+  def genPortRange(start: Int, end: Int): Int =
     start + scala.util.Random.nextInt((end - start) + 1)
+
+  def genData: List[(String, String)] =
+    (1 to msgCount).toList.map(i => (s"key$i", s"msg$i"))
 
   def buildVirtualServer: String = {
 
@@ -22,22 +29,16 @@ class PollSpec extends Specification with DefaultRuntime {
     bootstrapServer
   }
 
-  // number of messages to produce
-  val msgCount   = 2
-  val partNumber = 1
-
   def is = s2"""
 
   TSP Kafka should
-    publish data to a topic                     $t0    
+    publish data to a topic                     $t0        
+    poll and peek                               $t2  
+    
     shutdown all                                $shutdown  
     """
-
-  
-    /* subscribe for a topic                       $t1    
-    poll and peek                               $t2  
-    poll and read                               $t3 */
-  //produce, poll and peek                      $t4
+  // subscribe for a topic                       $t1
+  // poll and read                               $t3
 
   def t0 = {
 
@@ -48,20 +49,18 @@ class PollSpec extends Specification with DefaultRuntime {
       topic = "testTopic"
     )
 
-    val res:IO[Throwable, Boolean] =
-    //val res:UIO[Boolean] =
+    val res: IO[Throwable, Boolean] =
+      //val res:UIO[Boolean] =
       for {
-        _    <- KafkaConsumer.subscribe(cfg)
-        _ = println("subscriber done")
-        _    <- ZIO.effect(EmbeddedKafka.createCustomTopic(cfg.topic, partitions = partNumber))
-        _ = println("create topic done")
-        resp <- produceMany(cfg.topic, (1 to msgCount).toList.map(i => (s"key$i", s"msg$i"))).either
-        _ = println("producemany done")
+        _ <- KafkaConsumer.subscribe(cfg)
+        //_ = println("subscriber done")
+        _ <- ZIO.effect(EmbeddedKafka.createCustomTopic(cfg.topic, partitions = partNumber))
+        //_ = println("create topic done")
+        resp <- ZIO.effect(produceMany(cfg.topic, genData)).either
+        //_ = println("producemany done")
       } yield (resp.isRight == true)
 
     unsafeRun(res) must_== true
-    //true must_== true
-
   }
 
   def t1 = {
@@ -92,9 +91,10 @@ class PollSpec extends Specification with DefaultRuntime {
       topic = "testTopic"
     )
 
-    val res = KafkaConsumer.peekBatch(cfg)
+    val data: Chunk[String] = KafkaConsumer.peekBatch(cfg)
 
-    res.isEmpty must_== false
+    data must_== Chunk.fromIterable(genData)
+
   }
 
   def t3 = {
