@@ -11,6 +11,8 @@ import zio.kafka.client.KafkaTestUtils.{ produceMany }
 class PollSpec extends Specification with DefaultRuntime {
   EmbeddedKafka.start()
 
+  type KafkaData = List[(String, String)]
+
   // number of messages to produce
   val msgCount   = 2
   val partNumber = 1
@@ -18,7 +20,7 @@ class PollSpec extends Specification with DefaultRuntime {
   def genPortRange(start: Int, end: Int): Int =
     start + scala.util.Random.nextInt((end - start) + 1)
 
-  def genData: List[(String, String)] =
+  def genData: KafkaData =
     (1 to msgCount).toList.map(i => (s"key$i", s"msg$i"))
 
   def buildVirtualServer: String = {
@@ -91,10 +93,9 @@ class PollSpec extends Specification with DefaultRuntime {
       topic = "testTopic"
     )
 
-    val data: Chunk[String] = KafkaConsumer.peekBatch(cfg)
+    val data: Chunk[String] = KafkaConsumer.peekBatch(cfg)    
 
-    data must_== Chunk.fromIterable(genData)
-
+    data must_== Chunk.fromIterable(genData)    
   }
 
   def t3 = {
