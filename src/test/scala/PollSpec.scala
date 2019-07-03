@@ -1,7 +1,7 @@
 package kaftest
 
 import org.specs2._
-import zio.{ DefaultRuntime, UIO, ZIO }
+import zio.{ DefaultRuntime, UIO, ZIO, IO }
 //import zio.console.{ putStrLn }
 
 import net.manub.embeddedkafka.EmbeddedKafka
@@ -29,13 +29,14 @@ class PollSpec extends Specification with DefaultRuntime {
   def is = s2"""
 
   TSP Kafka should
-    subscribe for a topic                       $t1    
-    poll and peek                               $t2  
-    poll and read                               $t3
+    publish data to a topic                     $t0    
     shutdown all                                $shutdown  
     """
 
-  //publish data to a topic                     $t0
+  
+    /* subscribe for a topic                       $t1    
+    poll and peek                               $t2  
+    poll and read                               $t3 */
   //produce, poll and peek                      $t4
 
   def t0 = {
@@ -47,15 +48,19 @@ class PollSpec extends Specification with DefaultRuntime {
       topic = "testTopic"
     )
 
-    //val res:IO[Throwable, Boolean] =
-    val res =
+    val res:IO[Throwable, Boolean] =
+    //val res:UIO[Boolean] =
       for {
         _    <- KafkaConsumer.subscribe(cfg)
+        _ = println("subscriber done")
         _    <- ZIO.effect(EmbeddedKafka.createCustomTopic(cfg.topic, partitions = partNumber))
+        _ = println("create topic done")
         resp <- produceMany(cfg.topic, (1 to msgCount).toList.map(i => (s"key$i", s"msg$i"))).either
-      } yield (resp.isRight)
+        _ = println("producemany done")
+      } yield (resp.isRight == true)
 
     unsafeRun(res) must_== true
+    //true must_== true
 
   }
 
