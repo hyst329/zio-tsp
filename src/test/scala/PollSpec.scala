@@ -6,8 +6,10 @@ import zio.{ Chunk, DefaultRuntime, IO, UIO, ZIO }
 
 import net.manub.embeddedkafka.EmbeddedKafka
 import kafkaconsumer._
-import kafkaconsumer.KafkaConsumer.KafkaData
+//import kafkaconsumer.KafkaConsumer.KafkaData
 import zio.kafka.client.KafkaTestUtils.{ produceMany }
+import KafkaPkg._
+import KafkaTypes._
 
 class PollSpec extends Specification with DefaultRuntime {
   // val kafka = EmbeddedKafka.start()
