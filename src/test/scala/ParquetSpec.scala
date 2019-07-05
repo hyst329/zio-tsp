@@ -4,9 +4,8 @@ import zio.{ DefaultRuntime }
 import org.specs2._
 import ParquetReader._
 
-class SimpleSpec extends Specification with DefaultRuntime {
+class ParquetSpec extends Specification with DefaultRuntime {
 
-  //val rt   = new DefaultRuntime {}
   //val path = "/tmp/huge.pq"
   val path = "/tmp/hello.pq"
 
