@@ -25,7 +25,7 @@ lazy val commonSettings = Seq(
   version := "0.0.1",
   scalaVersion := "2.12.8",
   maxErrors := 3,
-  parallelExecution in Test := false,
+  parallelExecution in Test := true,
   commonLibs
 )
 

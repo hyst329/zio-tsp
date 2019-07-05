@@ -1,7 +1,7 @@
 package kaftest
 
 import org.specs2._
-import zio.{ Chunk, DefaultRuntime }
+import zio.{ Chunk, DefaultRuntime, ZIO }
 //import zio.console.{ putStrLn }
 
 import net.manub.embeddedkafka.EmbeddedKafka
@@ -26,6 +26,12 @@ class KafkaSpec extends Specification with DefaultRuntime {
     group = "group0",
     topic = "testTopic"
   ) */
+  val cfg = ConnectionConfig(
+    server = buildVirtualServer,
+    client = "client0",
+    group = "group0",
+    topic = "testTopic"
+  )
 
   // number of messages to produce
   val msgCount   = 2
@@ -48,19 +54,28 @@ class KafkaSpec extends Specification with DefaultRuntime {
   def is = s2"""
 
   TSP Kafka should
-   subscribe for a topic                        $t0
+    subscribe, create a topic and unsubscribe           $subscr         
+    publish and poll                                    $pubPoll
     
 
     """
 
-  def t0 = {
+  /* def subscr = {
+    val cons = Consumer.make[String, String](settings(cfg))
 
-    val cfg = ConnectionConfig(
-      server = buildVirtualServer,
-      client = "client0",
-      group = "group0",
-      topic = "testTopic"
-    )
+    val res: IO[Throwable, Boolean] =
+      //val res:UIO[Boolean] =
+      for {
+        cons <- cons.subscribe(cfg)
+        _ <- ZIO.effect(EmbeddedKafka.createCustomTopic(cfg.topic, partitions = partNumber))
+        resp <- cons.unsubscribe.either
+
+      } yield (resp.isRight == true)
+
+    unsafeRun(res) must_== true
+  } */
+
+  def pubPoll = {
 
     val subscription = Subscription.Topics(Set(cfg.topic))
 
@@ -80,4 +95,25 @@ class KafkaSpec extends Specification with DefaultRuntime {
 
     unsafeRun(res) must_== Chunk.fromIterable(genDummyData)
   }
+
+  def subscr = {
+
+    val subscription = Subscription.Topics(Set(cfg.topic))
+
+    val cons = Consumer.make[String, String](settings(cfg))
+
+    val res: BlockingTask[Boolean] = cons.use { r =>
+      for {
+
+        _    <- r.subscribe(subscription)
+        _    <- ZIO.effect(EmbeddedKafka.createCustomTopic(cfg.topic, partitions = partNumber))
+        resp <- r.unsubscribe.either
+
+      } yield (resp.isRight == true)
+
+    }
+
+    unsafeRun(res) must_== true
+  }
+
 }
