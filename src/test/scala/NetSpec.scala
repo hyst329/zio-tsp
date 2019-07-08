@@ -1,7 +1,7 @@
 package nettest
 
 import org.specs2._
-import zio.{ Chunk, DefaultRuntime, UIO, ZIO }
+import zio.{ Chunk, DefaultRuntime, UIO }
 //import zio.console.{ putStrLn }
 
 import net.manub.embeddedkafka.EmbeddedKafka
@@ -11,7 +11,7 @@ import zio.kafka.client.KafkaTestUtils.{ produceMany }
 import KafkaPkg._
 import KafkaTypes._
 import zio.kafka.client.{ Consumer, Subscription }
-import zio.kafka.client.KafkaTestUtils.{ pollNtimes, produceMany }
+import zio.kafka.client.KafkaTestUtils.{ pollNtimes, produceChunk, produceMany }
 import zio.kafka.client._
 
 import ParquetPkg._
@@ -49,7 +49,8 @@ class NetSpec extends Specification with DefaultRuntime {
 
   TSP Network should      
     display parquet file contents     $disp
-    publish parquet file to Kafka     $pub
+    publish Strings   to Kafka        $pubString
+    publish Byte Arr  to Kafka        $pubArr
 
     """
 
@@ -59,7 +60,7 @@ class NetSpec extends Specification with DefaultRuntime {
     true must_== true
   }
 
-  def pub = {
+  def pubString = {
 
     val subscription = Subscription.Topics(Set(cfg.topic))
 
@@ -69,7 +70,7 @@ class NetSpec extends Specification with DefaultRuntime {
       for {
 
         _    <- r.subscribe(subscription)
-        _    <- produceMany[List, (String, String)](cfg.topic, genDummyData)
+        _    <- produceMany(cfg.topic, genDummyData)
         data <- pollNtimes(5, r)
 
       } yield data.map { r =>
@@ -78,8 +79,28 @@ class NetSpec extends Specification with DefaultRuntime {
     }
 
     unsafeRun(res) must_== Chunk.fromIterable(genDummyData)
-
-    //true must_== true
   }
 
+  def pubArr = {
+
+    val data: Array[Byte] = Array(1.toByte, 2.toByte, 3.toByte)
+
+    val subscription = Subscription.Topics(Set(cfg.topic))
+
+    val cons = Consumer.make[String, String](settings(cfg))
+
+    val res: BlockingTask[Chunk[(String, String)]] = cons.use { r =>
+      for {
+
+        _    <- r.subscribe(subscription)
+        _    <- produceChunk(cfg.topic, data)
+        data <- pollNtimes(5, r)
+
+      } yield data.map { r =>
+        (r.key, r.value)
+      }
+    }
+
+    unsafeRun(res) must_== Chunk.fromArray(data)
+  }
 }
