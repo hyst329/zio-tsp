@@ -1,11 +1,9 @@
 package nettest
 
 import org.specs2._
-// import cats.kernel.Eq
-// import cats.implicits._
 
 import zio.{ Chunk, DefaultRuntime, UIO }
-//import zio.console.{ putStrLn }
+// import zio.console.{ putStrLn }
 
 import net.manub.embeddedkafka.EmbeddedKafka
 //import kafkaconsumer._
@@ -66,12 +64,13 @@ class NetSpec extends Specification with DefaultRuntime {
   }
 
   def pubString = {
+    type WorkType = BlockingTask[Chunk[(String, String)]]
 
     val subscription = Subscription.Topics(Set(cfg.topic))
 
     val cons = Consumer.make[String, String](settings(cfg))
 
-    val res: BlockingTask[Chunk[(String, String)]] = cons.use { r =>
+    val res: WorkType = cons.use { r =>
       for {
 
         _    <- r.subscribe(subscription)
@@ -88,31 +87,24 @@ class NetSpec extends Specification with DefaultRuntime {
 
   def pubArr = {
 
-    type BArr = Array[Byte]
-    val data: BArr = Array(1)
+    val data: BArr = Array(1, 2, 3)
 
     val subscription = Subscription.Topics(Set(cfg.topic))
 
     val cons = Consumer.make[String, BArr](settings(cfg))(Serdes.String, Serdes.ByteArray)
 
-    val res: BlockingTask[Chunk[BArr]] = cons.use { r =>
-      for {
+    unsafeRun(
+      cons.use { r =>
+        for {
+          _       <- r.subscribe(subscription)
+          _       <- produceChunk(cfg.topic, data)
+          batch   <- pollNtimes(5, r)
+          arr     = batch.map(_.value)
+          compare = arr.map(p => BArrEq.eqv(p, data))
 
-        _    <- r.subscribe(subscription)
-        _    <- produceChunk(cfg.topic, data)
-        data <- pollNtimes(5, r)
+        } yield compare must_== Chunk(true)
 
-      } yield data.map { r =>
-        r.value
       }
-    }
-
-    val exp = unsafeRun(res)
-
-    //val out = java.util.Arrays.equals(exp, act)
-
-    //true must_== true
-    exp must_== data
-
+    )
   }
 }
