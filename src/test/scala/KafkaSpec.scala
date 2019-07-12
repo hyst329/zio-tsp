@@ -1,4 +1,4 @@
-package kaftest
+/* package kaftest
 
 import org.specs2._
 import zio.{ Chunk, DefaultRuntime, ZIO }
@@ -54,9 +54,9 @@ class KafkaSpec extends Specification with DefaultRuntime {
   def is = s2"""
 
   TSP Kafka should
-    subscribe, create a topic and unsubscribe           $subscr         
+    subscribe, create a topic and unsubscribe           $subscr
     publish and poll                                    $pubPoll
-    
+
 
     """
 
@@ -117,3 +117,4 @@ class KafkaSpec extends Specification with DefaultRuntime {
   }
 
 }
+ */
