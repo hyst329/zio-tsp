@@ -21,6 +21,7 @@ import ParquetReader._
 
 class NetSpec extends Specification with DefaultRuntime {
 
+  // Read parquet data
   val path = "/tmp/hello.pq"
 
   val rows: UIO[(Int, TypeData)] =
@@ -33,14 +34,6 @@ class NetSpec extends Specification with DefaultRuntime {
   // number of partitions
   val partNumber = 1
 
-  def buildVirtualServer(port: Int): String = {
-
-    val cfg = EmbeddedKafkaConfig(kafkaPort = port)
-    EmbeddedKafka.start()(cfg)
-    val bootstrapServer = s"localhost:${port}"
-    bootstrapServer
-  }
-
   def is = s2"""
 
   TSP Network should      
@@ -48,10 +41,11 @@ class NetSpec extends Specification with DefaultRuntime {
     publish Strings   to Kafka        $pubString
     publish Byte Arr  to Kafka        $pubArr
 
+    killall                           $killall
+
     """
 
   def disp = {
-
     unsafeRun(rows.map(println))
     true must_== true
   }
@@ -65,22 +59,25 @@ class NetSpec extends Specification with DefaultRuntime {
       zooPort = 6000
     )
 
-    val cfg = SlaveConfig(
-      server = buildVirtualServer(netCfg.kafkaPort),
+    val slvCfg = SlaveConfig(
+      server = s"localhost:${netCfg.kafkaPort}",
       client = "client0",
       group = "group0",
-      topic = "StringTopic"
+      topic = "stringTopic"
     )
 
-    val subscription = Subscription.Topics(Set(cfg.topic))
+    val cfg = EmbeddedKafkaConfig(kafkaPort = netCfg.kafkaPort, zooKeeperPort = netCfg.zooPort)
+    EmbeddedKafka.start()(cfg)
 
-    val cons = Consumer.make[String, String](settings(cfg))
+    val subscription = Subscription.Topics(Set(slvCfg.topic))
+
+    val cons = Consumer.make[String, String](settings(slvCfg))
 
     val res: WorkType = cons.use { r =>
       for {
 
         _    <- r.subscribe(subscription)
-        _    <- produceMany(netCfg, cfg.topic, genDummyData)
+        _    <- produceMany(netCfg, slvCfg.topic, genDummyData)
         data <- pollNtimes(5, r)
         _    = EmbeddedKafka.stop
 
@@ -99,24 +96,27 @@ class NetSpec extends Specification with DefaultRuntime {
       zooPort = 6001
     )
 
-    val cfg = SlaveConfig(
-      server = buildVirtualServer(netCfg.kafkaPort),
+    val slvCfg = SlaveConfig(
+      server = s"localhost:${netCfg.kafkaPort}",
       client = "client1",
       group = "group1",
       topic = "BArrTopic"
     )
 
+    val cfg = EmbeddedKafkaConfig(kafkaPort = netCfg.kafkaPort, zooKeeperPort = netCfg.zooPort)
+    EmbeddedKafka.start()(cfg)
+
     val data: BArr = Array(1, 2, 3)
 
-    val subscription = Subscription.Topics(Set(cfg.topic))
+    val subscription = Subscription.Topics(Set(slvCfg.topic))
 
-    val cons = Consumer.make[String, BArr](settings(cfg))(Serdes.String, Serdes.ByteArray)
+    val cons = Consumer.make[String, BArr](settings(slvCfg))(Serdes.String, Serdes.ByteArray)
 
     unsafeRun(
       cons.use { r =>
         for {
           _       <- r.subscribe(subscription)
-          _       <- produceChunk(netCfg, cfg.topic, data)
+          _       <- produceChunk(netCfg, slvCfg.topic, data)
           batch   <- pollNtimes(5, r)
           _       = EmbeddedKafka.stop
           arr     = batch.map(_.value)
@@ -126,5 +126,10 @@ class NetSpec extends Specification with DefaultRuntime {
 
       }
     )
+  }
+
+  def killall() = {
+    EmbeddedKafka.stop
+    true must_== true
   }
 }
