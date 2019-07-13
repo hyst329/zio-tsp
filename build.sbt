@@ -1,4 +1,4 @@
-val ZioVersion      = "1.0.0-RC9-4"
+val ZioVersion      = "1.0.0-RC10-1"
 val CatsVersion     = "2.0.0-M4"
 val EmbKafkaVersion = "2.3.0"
 val Specs2Version   = "4.6.0"
