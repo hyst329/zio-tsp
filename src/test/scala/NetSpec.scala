@@ -2,7 +2,7 @@ package nettest
 
 import org.specs2._
 
-import zio.{ Chunk, DefaultRuntime, UIO }
+import zio.{ Chunk, DefaultRuntime }
 // import zio.console.{ putStrLn }
 
 import net.manub.embeddedkafka.{ EmbeddedKafka, EmbeddedKafkaConfig }
@@ -23,17 +23,19 @@ class NetSpec extends Specification with DefaultRuntime {
   // Read parquet data
   val path = "/tmp/hello.pq"
 
-  val rows: UIO[(Int, TypeData)] =
+  // val rows: Chunk[(Int, TypeData)] =
+  val rows: Chunk[TypeData] =
     for {
       frame <- Reader.getFrame(path)
-      size  = frame.getRowSize
-      data  <- Reader.getRows(frame)
-    } yield (size, data)
+      // size  = frame.getRowSize
+      data <- Reader.getRows(frame)
+      // } yield (size, data)
+    } yield data
 
   def is = s2"""
 
   TSP Network should      
-    display parquet file contents     
+    display parquet file contents     $disp
 
     publish Strings   to Kafka        $pubString
     publish Byte Arr  to Kafka        $pubArr
@@ -44,7 +46,7 @@ class NetSpec extends Specification with DefaultRuntime {
     """
 
   def disp = {
-    unsafeRun(rows.map(println))
+    println(rows)
     true must_== true
   }
 
@@ -125,8 +127,8 @@ class NetSpec extends Specification with DefaultRuntime {
     )
   }
 
-  def pubParquet =
-    /* val netCfg = NetConfig(
+  def pubParquet = {
+    val netCfg = NetConfig(
       kafkaPort = 9004,
       zooPort = 6002
     )
@@ -142,25 +144,26 @@ class NetSpec extends Specification with DefaultRuntime {
     EmbeddedKafka.start()(cfg)
 
     val subscription = Subscription.Topics(Set(slvCfg.topic))
+    val cons         = Consumer.make[String, BArr](settings(slvCfg))(Serdes.String, Serdes.ByteArray)
 
-    val cons = Consumer.make[String, BArr](settings(slvCfg))(Serdes.String, Serdes.ByteArray) */
+    type WorkType = BlockingTask[Chunk[BArr]]
+    val bytes = rows.mkString
 
-    /* unsafeRun(
-      cons.use { r =>
-        for {
-          _       <- r.subscribe(subscription)
-          _       <- produceChunk(netCfg, slvCfg.topic, rows)
-          batch   <- pollNtimes(5, r)
-          _       = EmbeddedKafka.stop
-          arr     = batch.map(_.value)
-          compare = arr.map(p => BArrEq.eqv(p, rows))
+    val res: WorkType = cons.use { r =>
+      for {
 
-        } yield compare must_== Chunk(true)
+        _    <- r.subscribe(subscription)
+        _    <- produce[String](netCfg, slvCfg.topic, Chunk(bytes))
+        data <- pollNtimes(5, r)
+        _    = EmbeddedKafka.stop
 
-      }
-    ) */
+      } yield data.map(_.value)
+    }
 
-    true must_== true
+    unsafeRun(res) must_== Chunk.fromIterable(List(bytes))
+
+    // true must_== true
+  }
 
   def killall() = {
     EmbeddedKafka.stop
