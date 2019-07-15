@@ -34,9 +34,9 @@ class NetSpec extends Specification with DefaultRuntime {
   def is = s2"""
 
   TSP Network should      
-    display parquet file contents     $disp
+    display parquet file contents     
 
-    publish Strings   to Kafka        $pubString
+    publish Strings   to Kafka        
     publish Byte Arr  to Kafka        $pubArr
     publish Parquet   to Kafka        
 
@@ -79,6 +79,7 @@ class NetSpec extends Specification with DefaultRuntime {
         _    <- produce[String](netCfg, slvCfg.topic, Chunk.fromIterable(genDummyListString))
         data <- pollNtimes(5, r)
         _    = EmbeddedKafka.stop
+        // _    = putStrLn(s"data: $data")
 
       } yield data.map(_.value)
     /*   } yield data.map { r =>
