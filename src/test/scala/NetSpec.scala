@@ -6,7 +6,6 @@ import zio.{ Chunk, DefaultRuntime, UIO }
 // import zio.console.{ putStrLn }
 
 import net.manub.embeddedkafka.{ EmbeddedKafka, EmbeddedKafkaConfig }
-//import kafkaconsumer._
 import kafkaconsumer.KafkaConsumer._
 import zio.kafka.client.KafkaTestUtils.{ pollNtimes, produce }
 import KafkaPkg._
@@ -36,9 +35,9 @@ class NetSpec extends Specification with DefaultRuntime {
   TSP Network should      
     display parquet file contents     
 
-    publish Strings   to Kafka        
+    publish Strings   to Kafka        $pubString
     publish Byte Arr  to Kafka        $pubArr
-    publish Parquet   to Kafka        
+    publish Parquet   to Kafka        $pubParquet
 
     killall                           $killall
 
@@ -79,7 +78,6 @@ class NetSpec extends Specification with DefaultRuntime {
         _    <- produce[String](netCfg, slvCfg.topic, Chunk.fromIterable(genDummyListString))
         data <- pollNtimes(5, r)
         _    = EmbeddedKafka.stop
-        // _    = putStrLn(s"data: $data")
 
       } yield data.map(_.value)
     /*   } yield data.map { r =>
@@ -125,13 +123,10 @@ class NetSpec extends Specification with DefaultRuntime {
 
       }
     )
-
-    // true must_== true
   }
 
-  def pubParquet = {
-
-    val netCfg = NetConfig(
+  def pubParquet =
+    /* val netCfg = NetConfig(
       kafkaPort = 9004,
       zooPort = 6002
     )
@@ -148,7 +143,7 @@ class NetSpec extends Specification with DefaultRuntime {
 
     val subscription = Subscription.Topics(Set(slvCfg.topic))
 
-    val cons = Consumer.make[String, BArr](settings(slvCfg))(Serdes.String, Serdes.ByteArray)
+    val cons = Consumer.make[String, BArr](settings(slvCfg))(Serdes.String, Serdes.ByteArray) */
 
     /* unsafeRun(
       cons.use { r =>
@@ -166,7 +161,6 @@ class NetSpec extends Specification with DefaultRuntime {
     ) */
 
     true must_== true
-  }
 
   def killall() = {
     EmbeddedKafka.stop
