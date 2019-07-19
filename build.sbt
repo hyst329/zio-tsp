@@ -1,5 +1,4 @@
 val ZioVersion      = "1.0.0-RC10-1"
-val CatsVersion     = "2.0.0-M4"
 val EmbKafkaVersion = "2.3.0"
 val Specs2Version   = "4.6.0"
 
@@ -9,7 +8,6 @@ resolvers += Resolver.sonatypeRepo("snapshots")
 lazy val commonLibs =
   libraryDependencies ++= Seq(
     "dev.zio"                 %% "zio"            % ZioVersion,
-    "org.typelevel"           %% "cats-core"      % CatsVersion,
     "io.github.embeddedkafka" %% "embedded-kafka" % EmbKafkaVersion % "test",
     "org.specs2"              %% "specs2-core"    % Specs2Version % "test"
   )
@@ -44,38 +42,8 @@ lazy val top = (project in file("."))
   .dependsOn(kafka, parquet)
 //.aggregate(kafka, parquet)
 
-scalacOptions := Seq(
-  "-Xsource:2.13",
-  "-Xlint",
-  "-Xverify",
-  "-feature",
-  "-deprecation",
-  "-explaintypes",
-  "-unchecked",
-  "-Xfuture",
-  "-encoding",
-  "UTF-8",
-  "-Yrangepos",
-  "-Xlint:_,-type-parameter-shadow",
-  "-Ywarn-numeric-widen",
-  "-Ywarn-unused",
-  "-Ywarn-value-discard",
-  "-language:higherKinds",
-  "-language:existentials",
-  "-Yno-adapted-args",
-  "-Ypartial-unification",
-  //"-Xfatal-warnings",
-  "-Xlint:-infer-any,_",
-  "-Ywarn-value-discard",
-  "-Ywarn-numeric-widen",
-  "-Ywarn-extra-implicit",
-  "-Ywarn-unused:_",
-  "-Ywarn-inaccessible",
-  "-Ywarn-nullary-override",
-  "-Ywarn-nullary-unit",
-  "-opt-inline-from:<source>",
-  "-opt-warnings",
-  "-opt:l:inline"
+scalacOptions --= Seq(
+  "-Xfatal-warnings"
 )
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)

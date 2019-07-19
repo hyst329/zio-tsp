@@ -119,7 +119,7 @@ class NetSpec extends Specification with DefaultRuntime {
           batch   <- pollNtimes(5, r)
           _       = EmbeddedKafka.stop
           arr     = batch.map(_.value)
-          compare = arr.map(p => BArrEq.eqv(p, data))
+          compare = arr.map(p => eqv(p, data))
 
         } yield compare must_== Chunk(true)
 
