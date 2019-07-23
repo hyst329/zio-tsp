@@ -34,12 +34,18 @@ lazy val parquet = (project in file("zio-parquet"))
     commonSettings
   )
 
+lazy val serdes = (project in file("zio-serdes"))
+  .settings(
+    name := "serdes",
+    commonSettings
+  )
+
 lazy val top = (project in file("."))
   .settings(
     name := "tsp",
     commonSettings
   )
-  .dependsOn(kafka, parquet)
+  .dependsOn(kafka, parquet, serdes)
 //.aggregate(kafka, parquet)
 
 scalacOptions --= Seq(

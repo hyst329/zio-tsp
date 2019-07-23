@@ -4,3 +4,6 @@
 [submodule "zio-parquet"]
 	path = zio-parquet
 	url = git@github.com:Clover-Group/zio-parquet.git
+[submodule "zio-serdes"]
+	path = zio-serdes
+	url = https://github.com/Neurodyne/zio-serdes

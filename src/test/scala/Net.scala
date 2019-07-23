@@ -39,7 +39,7 @@ class NetSpec extends Specification with DefaultRuntime {
 
     publish Strings   to Kafka        $pubString
     publish Byte Arr  to Kafka        $pubArr
-    publish Parquet   to Kafka        $pubParquet
+    publish Parquet   to Kafka        
 
     killall                           $killall
 
@@ -47,7 +47,7 @@ class NetSpec extends Specification with DefaultRuntime {
 
   def disp = {
     println(rows)
-    true must_== true
+    true === true
   }
 
   def pubString = {
@@ -87,7 +87,7 @@ class NetSpec extends Specification with DefaultRuntime {
       } */
     }
 
-    unsafeRun(res) must_== Chunk.fromIterable(genDummyListString)
+    unsafeRun(res) === Chunk.fromIterable(genDummyListString)
   }
 
   def pubArr = {
@@ -121,7 +121,7 @@ class NetSpec extends Specification with DefaultRuntime {
           arr     = batch.map(_.value)
           compare = arr.map(p => eqv(p, data))
 
-        } yield compare must_== Chunk(true)
+        } yield compare === Chunk(true)
 
       }
     )
@@ -160,13 +160,13 @@ class NetSpec extends Specification with DefaultRuntime {
       } yield data.map(_.value)
     }
 
-    unsafeRun(res) must_== Chunk.fromIterable(List(bytes))
+    unsafeRun(res) === Chunk.fromIterable(List(bytes))
 
-    // true must_== true
+    // true === true
   }
 
   def killall() = {
     EmbeddedKafka.stop
-    true must_== true
+    true === true
   }
 }
