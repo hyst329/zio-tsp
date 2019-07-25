@@ -35,11 +35,12 @@ class NetSpec extends Specification with DefaultRuntime {
   def is = s2"""
 
   TSP Network should      
-    display parquet file contents     $disp
+    display parquet file contents     
 
-    publish Strings   to Kafka        $pubString
-    publish Byte Arr  to Kafka        $pubArr
+    publish Strings   to Kafka        
+    publish Byte Arr  to Kafka        
     publish Parquet   to Kafka        
+    consume Parquet   from network    $prodTest
 
     killall                           $killall
 
@@ -163,6 +164,31 @@ class NetSpec extends Specification with DefaultRuntime {
     unsafeRun(res) === Chunk.fromIterable(List(bytes))
 
     // true === true
+  }
+
+  def prodTest = {
+
+    val slvCfg = SlaveConfig(
+      server = "37.228.115.243:9092",
+      client = "client5",
+      group = "group5",
+      topic = "parquet_small"
+    )
+
+    val subscription = Subscription.Topics(Set(slvCfg.topic))
+    val cons         = Consumer.make[String, BArr](settings(slvCfg))(Serdes.String, Serdes.ByteArray)
+
+    unsafeRun(
+      cons.use { r =>
+        for {
+          _     <- r.subscribe(subscription)
+          batch <- pollNtimes(5, r)
+          arr   = batch.map(_.value)
+          _     <- r.unsubscribe
+        } yield arr === rows
+
+      }
+    )
   }
 
   def killall() = {
