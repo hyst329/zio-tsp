@@ -4,6 +4,7 @@ import org.specs2._
 
 import java.io.{ ByteArrayInputStream, ByteArrayOutputStream }
 import java.util.Collections
+import java.util.Arrays.asList
 
 import zio.{ DefaultRuntime }
 // import zio.console.{ putStrLn }
@@ -24,6 +25,7 @@ import org.apache.arrow.vector.{ IntVector, VectorSchemaRoot }
 import org.apache.arrow.vector.types.pojo.{ ArrowType, Field, FieldType, Schema }
 
 // import zio.serdes.Serdes._
+import zio.{ Chunk }
 
 class ArrowSpec extends Specification with DefaultRuntime {
 
@@ -78,26 +80,27 @@ class ArrowSpec extends Specification with DefaultRuntime {
       // topic = "table_small"
     )
 
-    val exp: BArr = Array(1, 2, 3)
-    // val allocator = new RootAllocator(128)
+    // val exp: BArr = Array(1, 2, 3)
 
     val subscription = Subscription.Topics(Set(slvCfg.topic))
     val cons         = Consumer.make[String, BArr](settings(slvCfg))(Serdes.String, Serdes.ByteArray)
 
-    unsafeRun(
+    val data: Chunk[BArr] = unsafeRun(
       cons.use { r =>
         for {
           _     <- r.subscribe(subscription)
           batch <- pollNtimes(5, r)
           arr   = batch.map(_.value)
           _     <- r.unsubscribe
+          // tmp0  = serialize(arr)
           // data   = arr.toArray
           // stream = scatter(data)
           // reader = new ArrowStreamReader(stream.toByteArray, allocator)
-        } yield arr === exp
-
+        } yield arr
       }
     )
+
+    val tmp0 = serialize(data)
 
     true === true
 
@@ -105,8 +108,7 @@ class ArrowSpec extends Specification with DefaultRuntime {
 
   def testSchema = {
     val schema = new Schema(
-      java.util.Arrays
-        .asList(new Field("testField", FieldType.nullable(new ArrowType.Int(8, true)), Collections.emptyList()))
+      asList(new Field("testField", FieldType.nullable(new ArrowType.Int(8, true)), Collections.emptyList()))
     )
     schema
   }
