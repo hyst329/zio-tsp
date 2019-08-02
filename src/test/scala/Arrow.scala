@@ -24,8 +24,9 @@ import org.apache.arrow.vector.ipc.{ ArrowStreamReader, ArrowStreamWriter }
 import org.apache.arrow.vector.{ IntVector, VectorSchemaRoot }
 import org.apache.arrow.vector.types.pojo.{ ArrowType, Field, FieldType, Schema }
 
-// import zio.serdes.Serdes._
-import zio.{ Chunk }
+// import zio.serdes.{ Serdes => ZIOSerdes }
+import zio.serdes.Serdes._
+// import zio.{ Chunk }
 
 class ArrowSpec extends Specification with DefaultRuntime {
 
@@ -37,9 +38,7 @@ class ArrowSpec extends Specification with DefaultRuntime {
     display parquet file contents     
 
     consume parquet from prod       
-
     consume arrow from prod         $prodArrowTest
-
     killall                         $killall
 
     """
@@ -85,25 +84,27 @@ class ArrowSpec extends Specification with DefaultRuntime {
     val subscription = Subscription.Topics(Set(slvCfg.topic))
     val cons         = Consumer.make[String, BArr](settings(slvCfg))(Serdes.String, Serdes.ByteArray)
 
-    val data: Chunk[BArr] = unsafeRun(
+    val schema = testSchema
+
+    // val arr: Array[Int] = Array(1, 2, 3)
+    // val chunk           = Chunk.fromArray(arr)
+    // val bytes = ZIOSerdes[Chunk, Chunk].serialize[Int](chunk)
+
+    unsafeRun(
       cons.use { r =>
         for {
-          _     <- r.subscribe(subscription)
-          batch <- pollNtimes(5, r)
-          arr   = batch.map(_.value)
-          _     <- r.unsubscribe
-          // tmp0  = serialize(arr)
-          // data   = arr.toArray
-          // stream = scatter(data)
-          // reader = new ArrowStreamReader(stream.toByteArray, allocator)
-        } yield arr
+          _      <- r.subscribe(subscription)
+          batch  <- pollNtimes(5, r)
+          _      <- r.unsubscribe
+          arr    = batch.map(_.value)
+          out    = scatter(arr)
+          in     = new ByteArrayInputStream(out.toByteArray)
+          reader = new ArrowStreamReader(in, allocator)
+        } yield schema === reader.getVectorSchemaRoot.getSchema
       }
     )
 
-    val tmp0 = serialize(data)
-
-    true === true
-
+    // true === true
   }
 
   def testSchema = {
@@ -119,7 +120,7 @@ class ArrowSpec extends Specification with DefaultRuntime {
   def simpleRoot(schema: Schema): VectorSchemaRoot =
     VectorSchemaRoot.create(schema, allocator)
 
-  def serialize(root: VectorSchemaRoot): ByteArrayOutputStream = {
+  def serializeArrow(root: VectorSchemaRoot): ByteArrayOutputStream = {
     val out = new ByteArrayOutputStream
 
     val writer: ArrowStreamWriter = new ArrowStreamWriter(root, null, out)
@@ -127,7 +128,7 @@ class ArrowSpec extends Specification with DefaultRuntime {
     out
   }
 
-  def deserialize(stream: ByteArrayOutputStream): ArrowStreamReader = {
+  def deserializeArrow(stream: ByteArrayOutputStream): ArrowStreamReader = {
     val in     = new ByteArrayInputStream(stream.toByteArray)
     val reader = new ArrowStreamReader(in, allocator)
     reader
