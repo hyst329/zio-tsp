@@ -25,7 +25,7 @@ import org.apache.arrow.vector.{ IntVector, VectorSchemaRoot }
 import org.apache.arrow.vector.types.pojo.{ ArrowType, Field, FieldType, Schema }
 
 // import zio.serdes.{ Serdes => ZIOSerdes }
-import zio.serdes.Serdes._
+// import zio.serdes.Serdes._
 // import zio.{ Chunk }
 
 class ArrowSpec extends Specification with DefaultRuntime {
@@ -85,6 +85,10 @@ class ArrowSpec extends Specification with DefaultRuntime {
     val cons         = Consumer.make[String, BArr](settings(slvCfg))(Serdes.String, Serdes.ByteArray)
 
     val schema = testSchema
+    val root   = simpleRoot(schema)
+    root.getFieldVectors.get(0).allocateNew
+
+    val exp: BArr = root.getFieldVectors.get(0).asInstanceOf[BArr]
 
     // val arr: Array[Int] = Array(1, 2, 3)
     // val chunk           = Chunk.fromArray(arr)
@@ -93,13 +97,14 @@ class ArrowSpec extends Specification with DefaultRuntime {
     unsafeRun(
       cons.use { r =>
         for {
-          _      <- r.subscribe(subscription)
-          batch  <- pollNtimes(5, r)
-          _      <- r.unsubscribe
-          arr    = batch.map(_.value)
-          out    = scatter(arr)
-          in     = new ByteArrayInputStream(out.toByteArray)
-          reader = new ArrowStreamReader(in, allocator)
+          _     <- r.subscribe(subscription)
+          batch <- pollNtimes(5, r)
+          _     <- r.unsubscribe
+          arr   = batch.map(_.value)
+          // out    = scatter(arr)
+          out = serializeArrow(root)
+          // in     = new ByteArrayInputStream(out.toByteArray)
+          reader = deserializeArrow(out)
         } yield schema === reader.getVectorSchemaRoot.getSchema
       }
     )
