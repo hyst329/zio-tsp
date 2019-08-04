@@ -36,11 +36,11 @@ class ArrowSpec extends Specification with DefaultRuntime {
     display parquet file contents     
 
     consume parquet from prod       
-    consume arrow from prod         $prodArrowTest
+    consume arrow from prod         $testConsumeArrow
     killall                         $killall
 
     """
-  def prodParquetTest = {
+  def testConsumeParquet = {
 
     val slvCfg = SlaveConfig(
       server = "37.228.115.243:9092",
@@ -67,7 +67,7 @@ class ArrowSpec extends Specification with DefaultRuntime {
     )
   }
 
-  def prodArrowTest = {
+  def testConsumeArrow = {
 
     val slvCfg = SlaveConfig(
       server = "37.228.115.243:9092",
@@ -77,13 +77,11 @@ class ArrowSpec extends Specification with DefaultRuntime {
       // topic = "table_small"
     )
 
-    // val exp: BArr = Array(1, 2, 3)
-
     val subscription = Subscription.Topics(Set(slvCfg.topic))
     val cons         = Consumer.make[String, BArr](settings(slvCfg))(Serdes.String, Serdes.ByteArray)
 
-    val schema = testSchema
-    val root   = simpleRoot(schema)
+    val globalSchema = testSchema
+    val root         = simpleRoot(globalSchema)
     root.getFieldVectors.get(0).allocateNew
 
     unsafeRun(
@@ -94,16 +92,18 @@ class ArrowSpec extends Specification with DefaultRuntime {
           _     <- r.unsubscribe
 
           arr    = batch.map(_.value)
-          reader = convert(arr)
+          reader = deserialize(arr)
+          schema = reader.map(r => r.getVectorSchemaRoot.getSchema)
+          empty  = reader.map(r => r.loadNextBatch)
 
-        } yield reader.map(r => r.getVectorSchemaRoot) === schema
+        } yield (schema === globalSchema) and (empty === false)
 
       }
     )
 
   }
 
-  def convert(din: Chunk[BArr]): Chunk[ArrowStreamReader] =
+  def deserialize(din: Chunk[BArr]): Chunk[ArrowStreamReader] =
     for {
       arr    <- din
       stream = new ByteArrayInputStream(arr)
@@ -123,7 +123,7 @@ class ArrowSpec extends Specification with DefaultRuntime {
   def simpleRoot(schema: Schema): VectorSchemaRoot =
     VectorSchemaRoot.create(schema, allocator)
 
-  def deserializeArrow(stream: ByteArrayInputStream): ArrowStreamReader = new ArrowStreamReader(stream, allocator)
+  // def deserializeArrow(stream: ByteArrayInputStream): ArrowStreamReader = new ArrowStreamReader(stream, allocator)
 
   // def serializeArrow(root: VectorSchemaRoot): ByteArrayOutputStream = {
   //   val out = new ByteArrayOutputStream
