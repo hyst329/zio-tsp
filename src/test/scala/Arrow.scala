@@ -2,7 +2,7 @@ package nettest
 
 import org.specs2._
 
-import java.io.{ ByteArrayInputStream, ByteArrayOutputStream }
+import java.io.{ ByteArrayInputStream }
 import java.util.Collections
 import java.util.Arrays.asList
 
@@ -20,13 +20,11 @@ import zio.kafka.client._
 import org.apache.kafka.common.serialization.Serdes
 
 import org.apache.arrow.memory.RootAllocator
-import org.apache.arrow.vector.ipc.{ ArrowStreamReader, ArrowStreamWriter }
+import org.apache.arrow.vector.ipc.{ ArrowStreamReader }
 import org.apache.arrow.vector.{ IntVector, VectorSchemaRoot }
 import org.apache.arrow.vector.types.pojo.{ ArrowType, Field, FieldType, Schema }
 
-// import zio.serdes.{ Serdes => ZIOSerdes }
-// import zio.serdes.Serdes._
-// import zio.{ Chunk }
+import zio.{ Chunk }
 
 class ArrowSpec extends Specification with DefaultRuntime {
 
@@ -88,29 +86,29 @@ class ArrowSpec extends Specification with DefaultRuntime {
     val root   = simpleRoot(schema)
     root.getFieldVectors.get(0).allocateNew
 
-    val exp: BArr = root.getFieldVectors.get(0).asInstanceOf[BArr]
-
-    // val arr: Array[Int] = Array(1, 2, 3)
-    // val chunk           = Chunk.fromArray(arr)
-    // val bytes = ZIOSerdes[Chunk, Chunk].serialize[Int](chunk)
-
     unsafeRun(
       cons.use { r =>
         for {
           _     <- r.subscribe(subscription)
           batch <- pollNtimes(5, r)
           _     <- r.unsubscribe
-          arr   = batch.map(_.value)
-          // out    = scatter(arr)
-          out = serializeArrow(root)
-          // in     = new ByteArrayInputStream(out.toByteArray)
-          reader = deserializeArrow(out)
-        } yield schema === reader.getVectorSchemaRoot.getSchema
+
+          arr    = batch.map(_.value)
+          reader = convert(arr)
+
+        } yield reader.map(r => r.getVectorSchemaRoot) === schema
+
       }
     )
 
-    // true === true
   }
+
+  def convert(din: Chunk[BArr]): Chunk[ArrowStreamReader] =
+    for {
+      arr    <- din
+      stream = new ByteArrayInputStream(arr)
+
+    } yield new ArrowStreamReader(stream, allocator)
 
   def testSchema = {
     val schema = new Schema(
@@ -125,19 +123,21 @@ class ArrowSpec extends Specification with DefaultRuntime {
   def simpleRoot(schema: Schema): VectorSchemaRoot =
     VectorSchemaRoot.create(schema, allocator)
 
-  def serializeArrow(root: VectorSchemaRoot): ByteArrayOutputStream = {
-    val out = new ByteArrayOutputStream
+  def deserializeArrow(stream: ByteArrayInputStream): ArrowStreamReader = new ArrowStreamReader(stream, allocator)
 
-    val writer: ArrowStreamWriter = new ArrowStreamWriter(root, null, out)
-    writer.close()
-    out
-  }
+  // def serializeArrow(root: VectorSchemaRoot): ByteArrayOutputStream = {
+  //   val out = new ByteArrayOutputStream
 
-  def deserializeArrow(stream: ByteArrayOutputStream): ArrowStreamReader = {
-    val in     = new ByteArrayInputStream(stream.toByteArray)
-    val reader = new ArrowStreamReader(in, allocator)
-    reader
-  }
+  //   val writer: ArrowStreamWriter = new ArrowStreamWriter(root, null, out)
+  //   writer.close()
+  //   out
+  // }
+
+  // def deserializeArrow(stream: ByteArrayOutputStream): ArrowStreamReader = {
+  //   val in     = new ByteArrayInputStream(stream.toByteArray)
+  //   val reader = new ArrowStreamReader(in, allocator)
+  //   reader
+  // }
 
   def killall() = {
     EmbeddedKafka.stop
