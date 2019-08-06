@@ -7,7 +7,6 @@ import java.util.Collections
 import java.util.Arrays.asList
 
 import zio.{ Chunk, DefaultRuntime }
-// import zio.console.{ putStrLn }
 
 import org.apache.kafka.common.serialization.Serdes
 import net.manub.embeddedkafka.{ EmbeddedKafka, EmbeddedKafkaConfig }
@@ -35,7 +34,7 @@ class ArrowSpec extends Specification with DefaultRuntime {
 
     consume parquet from prod      
     consume arrow from prod                 $testConsumeArrow
-    produce and consume arrow locally       $testProduceAndConsumeArrow
+    produce and consume arrow locally       
     killall                                 $killall
 
     """
@@ -72,8 +71,7 @@ class ArrowSpec extends Specification with DefaultRuntime {
       server = "37.228.115.243:9092",
       client = "client5",
       group = "group5",
-      topic = "batch_record_small"
-      // topic = "table_small"
+      topic = "batch_record_small_stream_writer"
     )
 
     val subscription = Subscription.Topics(Set(slvCfg.topic))
@@ -86,18 +84,20 @@ class ArrowSpec extends Specification with DefaultRuntime {
     unsafeRun(
       cons.use { r =>
         for {
-          _     <- r.subscribe(subscription)
-          batch <- pollNtimes(5, r)
-          _     <- r.unsubscribe
+          _         <- r.subscribe(subscription)
+          batch     <- pollNtimes(5, r)
+          _         <- r.unsubscribe
+          arr       = batch.map(_.value)
+          reader    = deserialize(arr)
+          schema    = reader.map(r => r.getVectorSchemaRoot.getSchema)
+          empty     = reader.map(r => r.loadNextBatch)
+          bytesRead = reader.map(r => r.bytesRead)
+          rowCount  = reader.map(r => r.getVectorSchemaRoot.getRowCount)
+          _         = println(schema)
+          _         = println(rowCount)
+          _         = println(bytesRead)
 
-          arr = batch.map(_.value)
-          // _      <- putStrLn(arr.toString)
-          reader = deserialize(arr)
-          schema = reader.map(r => r.getVectorSchemaRoot.getSchema)
-          empty  = reader.map(r => r.loadNextBatch)
-
-        } yield (schema === globalSchema) and (empty === false)
-
+        } yield empty === Chunk(true)
       }
     )
 
@@ -149,6 +149,8 @@ class ArrowSpec extends Specification with DefaultRuntime {
 
   }
 
+  // Test helpers 
+  
   def testSchema = {
     val schema = new Schema(
       asList(new Field("testField", FieldType.nullable(new ArrowType.Int(8, true)), Collections.emptyList()))
@@ -162,23 +164,7 @@ class ArrowSpec extends Specification with DefaultRuntime {
   def simpleRoot(schema: Schema): VectorSchemaRoot =
     VectorSchemaRoot.create(schema, allocator)
 
-  // def deserializeArrow(stream: ByteArrayInputStream): ArrowStreamReader = new ArrowStreamReader(stream, allocator)
-
-  // def serializeArrow(root: VectorSchemaRoot): ByteArrayOutputStream = {
-  //   val out = new ByteArrayOutputStream
-
-  //   val writer: ArrowStreamWriter = new ArrowStreamWriter(root, null, out)
-  //   writer.close()
-  //   out
-  // }
-
-  // def deserializeArrow(stream: ByteArrayOutputStream): ArrowStreamReader = {
-  //   val in     = new ByteArrayInputStream(stream.toByteArray)
-  //   val reader = new ArrowStreamReader(in, allocator)
-  //   reader
-  // }
-
-  def killall() = {
+  def killall = {
     EmbeddedKafka.stop
     true === true
   }
