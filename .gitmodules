@@ -7,3 +7,6 @@
 [submodule "zio-serdes"]
 	path = zio-serdes
 	url = https://github.com/Neurodyne/zio-serdes
+[submodule "zio_front"]
+	path = zio_front
+	url = https://github.com/Clover-Group/zio_front

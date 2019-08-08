@@ -24,6 +24,12 @@ lazy val commonSettings = Seq(
   commonLibs
 )
 
+lazy val front = (project in file("zio_front"))
+  .settings(
+    name := "front",
+    commonSettings
+  )
+
 lazy val kafka = (project in file("zio-kafka"))
   .settings(
     name := "kafka",
@@ -47,7 +53,7 @@ lazy val top = (project in file("."))
     name := "tsp",
     commonSettings
   )
-  .dependsOn(kafka, serdes)
+  .dependsOn(kafka, serdes, front)
 //.aggregate(kafka, parquet)
 
 scalacOptions --= Seq(
