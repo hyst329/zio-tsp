@@ -149,8 +149,8 @@ class ArrowSpec extends Specification with DefaultRuntime {
 
   }
 
-  // Test helpers 
-  
+  // Test helpers
+
   def testSchema = {
     val schema = new Schema(
       asList(new Field("testField", FieldType.nullable(new ArrowType.Int(8, true)), Collections.emptyList()))

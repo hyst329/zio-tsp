@@ -1,6 +1,6 @@
-val ZioVersion      = "1.0.0-RC10-1"
+val ZioVersion      = "1.0.0-RC11-1"
 val EmbKafkaVersion = "2.3.0"
-val Specs2Version   = "4.6.0"
+val Specs2Version   = "4.7.0"
 val ArrowVersion    = "0.14.1"
 
 resolvers += Resolver.sonatypeRepo("releases")
@@ -18,7 +18,7 @@ lazy val commonSettings = Seq(
   organization := "CloverGroup",
   //name := "zio-tsp",
   version := "0.0.1",
-  scalaVersion := "2.12.8",
+  scalaVersion := "2.12.9",
   maxErrors := 3,
   parallelExecution in Test := true,
   commonLibs
@@ -30,11 +30,11 @@ lazy val kafka = (project in file("zio-kafka"))
     commonSettings
   )
 
-lazy val parquet = (project in file("zio-parquet"))
-  .settings(
-    name := "parquet",
-    commonSettings
-  )
+//lazy val parquet = (project in file("zio-parquet"))
+//  .settings(
+//    name := "parquet",
+//    commonSettings
+//  )
 
 lazy val serdes = (project in file("zio-serdes"))
   .settings(
@@ -47,7 +47,7 @@ lazy val top = (project in file("."))
     name := "tsp",
     commonSettings
   )
-  .dependsOn(kafka, parquet, serdes)
+  .dependsOn(kafka, serdes)
 //.aggregate(kafka, parquet)
 
 scalacOptions --= Seq(
