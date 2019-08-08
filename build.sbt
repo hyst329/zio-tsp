@@ -11,14 +11,14 @@ lazy val commonLibs =
     "dev.zio"                 %% "zio"            % ZioVersion,
     "io.github.embeddedkafka" %% "embedded-kafka" % EmbKafkaVersion % "test",
     "org.specs2"              %% "specs2-core"    % Specs2Version % "test",
-    "org.apache.arrow"        % "arrow-memory"    % ArrowVersion
+    "org.apache.arrow"        % "arrow-vector"    % ArrowVersion
   )
 
 lazy val commonSettings = Seq(
   organization := "CloverGroup",
   //name := "zio-tsp",
   version := "0.0.1",
-  scalaVersion := "2.12.9",
+  scalaVersion := "2.12.8",
   maxErrors := 3,
   parallelExecution in Test := true,
   commonLibs
@@ -42,18 +42,18 @@ lazy val kafka = (project in file("zio-kafka"))
 //    commonSettings
 //  )
 
-lazy val serdes = (project in file("zio-serdes"))
-  .settings(
-    name := "serdes",
-    commonSettings
-  )
+//lazy val serdes = (project in file("zio-serdes"))
+//  .settings(
+//    name := "serdes",
+//    commonSettings
+//  )
 
 lazy val top = (project in file("."))
   .settings(
     name := "tsp",
     commonSettings
   )
-  .dependsOn(kafka, serdes, front)
+  .dependsOn(kafka, front)
 //.aggregate(kafka, parquet)
 
 scalacOptions --= Seq(

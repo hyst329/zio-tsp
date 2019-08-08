@@ -2,26 +2,27 @@ package nettest
 
 import org.specs2._
 
-import java.io.{ ByteArrayInputStream, ByteArrayOutputStream }
+// import java.io.{ ByteArrayInputStream }
 import java.util.Collections
 import java.util.Arrays.asList
 
 import zio.{ Chunk, DefaultRuntime }
 
 import org.apache.kafka.common.serialization.Serdes
-import net.manub.embeddedkafka.{ EmbeddedKafka, EmbeddedKafkaConfig }
+import net.manub.embeddedkafka.{ EmbeddedKafka }
 import zio.kafka.client.KafkaTestUtils.{ pollNtimes }
 import zio.kafka.client.{ Consumer, Subscription }
 import KafkaPkg._
 import KafkaTypes._
-import kafkaconsumer.KafkaConsumer.{ settings }
+import kafkaConsumer.KafkaConsumer.{ settings }
 
 import org.apache.arrow.memory.RootAllocator
-import org.apache.arrow.vector.ipc.{ ArrowStreamReader, ArrowStreamWriter }
+// import org.apache.arrow.vector.ipc.{ ArrowStreamReader }
 import org.apache.arrow.vector.{ IntVector, VectorSchemaRoot }
 import org.apache.arrow.vector.types.pojo.{ ArrowType, Field, FieldType, Schema }
 
-import zio.serdes.Serdes._
+// import zio.serdes.Serdes._
+import ArrowPkg._
 
 class ArrowSpec extends Specification with DefaultRuntime {
 
@@ -103,51 +104,44 @@ class ArrowSpec extends Specification with DefaultRuntime {
 
   }
 
-  def testProduceAndConsumeArrow = {
+  // def testProduceAndConsumeArrow = {
 
-    val netCfg = NetConfig(
-      kafkaPort = 9003,
-      zooPort = 6001
-    )
+  //   val netCfg = NetConfig(
+  //     kafkaPort = 9003,
+  //     zooPort = 6001
+  //   )
 
-    val slvCfg = SlaveConfig(
-      server = s"localhost:${netCfg.kafkaPort}",
-      client = "client1",
-      group = "group1",
-      topic = "BArrTopic"
-    )
+  //   val slvCfg = SlaveConfig(
+  //     server = s"localhost:${netCfg.kafkaPort}",
+  //     client = "client1",
+  //     group = "group1",
+  //     topic = "BArrTopic"
+  //   )
 
-    val cfg = EmbeddedKafkaConfig(kafkaPort = netCfg.kafkaPort, zooKeeperPort = netCfg.zooPort)
-    // EmbeddedKafka.start()(cfg)
+  //   val cfg = EmbeddedKafkaConfig(kafkaPort = netCfg.kafkaPort, zooKeeperPort = netCfg.zooPort)
+  //   // EmbeddedKafka.start()(cfg)
 
-    // val data: BArr   = Array(1, 2, 3)
-    // val data   = Chunk(1, 2, 3)
-    // val stream = scatter(data)
-    val root = simpleRoot(testSchema)
-    root.getFieldVectors.get(0).allocateNew
-    // val vec: TinyIntVector = root.getFieldVectors.get(0).asInstanceOf[TinyIntVector]
+  //   // val data: BArr   = Array(1, 2, 3)
+  //   // val data   = Chunk(1, 2, 3)
+  //   // val stream = scatter(data)
+  //   val root = simpleRoot(testSchema)
+  //   root.getFieldVectors.get(0).allocateNew
+  //   // val vec: TinyIntVector = root.getFieldVectors.get(0).asInstanceOf[TinyIntVector]
 
-    val out = new ByteArrayOutputStream
+  //   val out = new ByteArrayOutputStream
 
-    val writer = new ArrowStreamWriter(root, null, out)
-    writer.close
+  //   val writer = new ArrowStreamWriter(root, null, out)
+  //   writer.close
 
-    out.size must be > 0
+  //   out.size must be > 0
 
-  }
+  // }
 
-  def deserialize(din: Chunk[BArr]): Chunk[ArrowStreamReader] =
-    for {
-      arr    <- din
-      stream = new ByteArrayInputStream(arr)
+  // def serialize(din: Chunk[Int]) = {
+  //   val stream = scatter(din)
+  //   // val writer = new ArrowStreamWriter (allocator, )
 
-    } yield new ArrowStreamReader(stream, allocator)
-
-  def serialize(din: Chunk[Int]) = {
-    val stream = scatter(din)
-    // val writer = new ArrowStreamWriter (allocator, )
-
-  }
+  // }
 
   // Test helpers
 
