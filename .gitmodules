@@ -1,9 +1,9 @@
 [submodule "zio-kafka"]
 	path = zio-kafka
-	url = git@github.com:Clover-Group/zio-kafka.git
+	url = https://github.com/Clover-Group/zio-kafka
 [submodule "zio-parquet"]
 	path = zio-parquet
-	url = git@github.com:Clover-Group/zio-parquet.git
+	url = https://github.com/Clover-Group/zio-parquet
 [submodule "zio-serdes"]
 	path = zio-serdes
 	url = https://github.com/Neurodyne/zio-serdes

@@ -14,6 +14,10 @@ lazy val commonLibs =
     "org.apache.arrow"        % "arrow-vector"    % ArrowVersion
   )
 
+maintainer in Docker := "Clover Group"
+dockerUsername in Docker := Some("clovergrp")
+dockerUpdateLatest := true
+
 lazy val commonSettings = Seq(
   organization := "CloverGroup",
   //name := "zio-tsp",
@@ -21,7 +25,9 @@ lazy val commonSettings = Seq(
   scalaVersion := "2.12.8",
   maxErrors := 3,
   parallelExecution in Test := true,
-  commonLibs
+  commonLibs,
+  // do not release sub-projects
+  skip in publish := true
 )
 
 lazy val front = (project in file("zio_front"))
@@ -53,11 +59,59 @@ lazy val top = (project in file("."))
     name := "tsp",
     commonSettings
   )
+  .settings(
+    inTask(assembly)(assemblySettings),
+    skip in publish := false,
+  )
+  .enablePlugins(JavaAppPackaging, UniversalPlugin)
   .dependsOn(kafka, front)
 //.aggregate(kafka, parquet)
 
 scalacOptions --= Seq(
   "-Xfatal-warnings"
+)
+
+lazy val assemblySettings = Seq(
+  assemblyJarName := s"TSP_v${version.value}.jar",
+  javaOptions += "--add-modules=java.xml.bind",
+  assemblyMergeStrategy := { _ => MergeStrategy.discard } // TODO: Check
+)
+
+scriptClasspath := Seq((assemblyJarName in (assembly in top)).value)
+
+// make native packager use only the fat jar
+mappings in Universal := {
+  // universalMappings: Seq[(File,String)]
+  val universalMappings = (mappings in Universal).value
+  val fatJar = (assembly in top).value
+  // removing means filtering
+  val filtered = universalMappings filter {
+    case (file, name) => !name.contains(".jar")
+  }
+  // add the fat jar
+  filtered :+ (fatJar -> ("lib/" + fatJar.getName))
+}
+
+mappings in Docker := {
+  // universalMappings: Seq[(File,String)]
+  val universalMappings = (mappings in Universal).value
+  val fatJar = (assembly in top).value
+  // removing means filtering
+  val filtered = universalMappings filter {
+    case (file, name) => !name.contains(".jar")
+  }
+  // add the fat jar
+  filtered :+ (fatJar -> ("lib/" + fatJar.getName))
+}
+
+// clear the existing docker commands
+dockerCommands := Seq()
+
+import com.typesafe.sbt.packager.docker._
+dockerCommands := Seq(
+  Cmd("FROM", "openjdk:12.0.1-jdk-oracle"),
+  Cmd("LABEL", s"""MAINTAINER="${(maintainer in Docker).value}""""),
+  // TODO: Add artefacts here
 )
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
